@@ -1,0 +1,56 @@
+body {
+    background-color: #ECF0F1;
+    margin: 0;
+    margin-top: 40px;
+    /*overflow: hidden;*/
+}
+svg {
+    overflow: visible;
+}
+
+.git_list text.caption {
+    font-size: 15px;
+}
+
+.git_list text.caption_month {
+    font-size: 12px;
+    fill: #BBB;
+}
+
+.git_list text.caption_day {
+    font-size: 12px;
+    fill: #BBB;
+}
+
+.svg-tip:after {
+    box-sizing: border-box;
+    position: absolute;
+    left: 50%;
+    height: 5px;
+    width: 5px;
+    bottom: -10px;
+    margin: 0px 0px 0px -5px;
+    content: " ";
+    border-width: 5px;
+    border-style: solid;
+    border-right: 5px solid transparent;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent;
+    -moz-border-top-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    border-image: none;
+}
+
+.svg-tip {
+    padding: 10px;
+    background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
+    color: #BBB;
+    font-size: 12px;
+    position: absolute;
+    z-index: 99999;
+    text-align: center;
+    border-radius: 3px;
+    box-sizing: border-box;
+    opacity: 0;
+}

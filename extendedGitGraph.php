@@ -192,4 +192,58 @@ class ExtendedGitGraph {
 		$this->repositories = $data['repositories'];
 		$this->commits = $data['commits'];
 	}
+
+	public function generate($year) {
+		$ymap = $this->generateYearMap($year);// unused on purpose (template.php needs it)
+
+		$ymapmax = $this->getMaxCommitCount();
+
+		ob_start();
+		include('template.php');
+		$returned = ob_get_contents();
+		ob_end_clean();
+
+		return $returned;
+	}
+
+	private function getMaxCommitCount() {
+		$max = 0;
+
+		foreach($this->getYears() as $year) {
+			$max = max($max, max($this->generateYearMap($year)));
+		}
+
+		return $max;
+	}
+
+	private function generateYearMap($year) {
+		$ymap = array();
+
+		$date = new DateTime($year . '-01-01');
+		while($date->format('Y') == $year) {
+			$ymap[$date->format('Y-m-d')] = 0;
+
+			$date = $date->modify("+1 day");
+		}
+
+		foreach	($this->commits as $commit) {
+			if(array_key_exists($commit['date']->format('Y-m-d'), $ymap))
+				$ymap[$commit['date']->format('Y-m-d')]++;
+		}
+
+		return $ymap;
+	}
+
+	public function getYears() {
+		$years = array();
+
+		foreach	($this->commits as $commit) {
+			if(! in_array($commit['date']->format('Y'), $years))
+				$years[] = $commit['date']->format('Y');
+		}
+
+		asort($years);
+
+		return $years;
+	}
 } 
