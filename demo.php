@@ -9,7 +9,7 @@ $v = new ExtendedGitGraph('Mikescher');
 //$v->setToken('7b3f6443cdd4b2f92d75c4c8aa83cfda6c7ca3ce');
 //$v->collect();
 
-$v->load();
+$v->loadData();
 
 ?>
 
@@ -27,14 +27,8 @@ $v->load();
 	</head>
 	<body>
 		<?php
-			foreach($v->getYears() as $year) {
-				echo '<div style="min-height: 170px; border: 1px solid black; margin: 10px; border-radius: 16px;">';
-				echo $v->generate($year);
-				echo '</div>';
-			}
+			//echo $v->generateAndSave();
+			echo $v->loadFinished();
 		?>
-
-
-
 	</body>
 </html>

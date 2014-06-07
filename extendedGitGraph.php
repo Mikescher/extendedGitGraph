@@ -186,7 +186,7 @@ class ExtendedGitGraph {
 		echo '[' . date('H:i.s') . '] ' . $txt . "<br>";
 	}
 
-	public function load() {
+	public function loadData() {
 		$data = unserialize(file_get_contents('ext_git_graph.dat'));
 
 		$this->repositories = $data['repositories'];
@@ -194,9 +194,9 @@ class ExtendedGitGraph {
 	}
 
 	public function generate($year) {
-		$ymap = $this->generateYearMap($year);// unused on purpose (template.php needs it)
+		$ymap = $this->generateYearMap($year);  // unused on purpose (template.php needs it)
 
-		$ymapmax = $this->getMaxCommitCount();
+		$ymapmax = $this->getMaxCommitCount();  // unused on purpose (template.php needs it)
 
 		ob_start();
 		include('template.php');
@@ -204,6 +204,29 @@ class ExtendedGitGraph {
 		ob_end_clean();
 
 		return $returned;
+	}
+
+	public function generateAndSave() {
+		$result = '';
+
+		foreach($this->getYears() as $year) {
+			$result.= $this->generate($year);
+			$result.= '<br />';
+		}
+
+		file_put_contents('gitgraph.dat',
+			serialize(
+				[
+					'creation' => new DateTime(),
+					'content' => $result,
+				]));
+
+		return $result;
+	}
+
+	public function loadFinished() {
+		$data = unserialize(file_get_contents('gitgraph.dat'));
+		return $data['content'];
 	}
 
 	private function getMaxCommitCount() {
