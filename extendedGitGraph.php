@@ -116,9 +116,15 @@ class ExtendedGitGraph {
 
 	private function getJSON($url) {
 		$options  = array('http' => array('user_agent'=> $_SERVER['HTTP_USER_AGENT']));
-//		$options  = array('http' => array('user_agent'=> 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'));
 		$context  = stream_context_create($options);
-		$response = file_get_contents($url, false, $context);
+
+		$response = @file_get_contents($url, false, $context);
+
+		if ($response === false)
+		{
+			$this->output_flushed("Error recieving json: '" . $url . "'");
+			return array();
+		}
 
 		return json_decode($response);
 	}
@@ -213,14 +219,16 @@ class ExtendedGitGraph {
 
 	public function output_flushed_clear()
 	{
-		session_start();
+		if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+
 		$_SESSION[self::PROGRESS_SESSION_COOKIE] = '';
 		session_commit();
 	}
 
 	public function output_flushed($txt)
 	{
-		session_start();
+		if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+
 		$_SESSION[self::PROGRESS_SESSION_COOKIE] .= '[' . date('H:i.s') . '] ' . $txt . "\r\n";
 		session_commit();
 	}

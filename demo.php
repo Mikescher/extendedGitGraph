@@ -57,6 +57,20 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 							async:   true
 						});
 					},
+					error: function( jqXHR, textStatus, errorThrown)
+					{
+						clearInterval(val);
+
+						jQuery.ajax({
+							url:    'ajaxStatus.php',
+							success: function(result)
+							{
+								$('#ajaxOutput').val(result + '\r\n' + 'AN ERROR OCCURED:' + '\r\n' + textStatus);
+								$('#ajaxOutput').scrollTop($('#ajaxOutput')[0].scrollHeight);
+							},
+							async:   true
+						});
+					},
 					async:   true
 				});
 
