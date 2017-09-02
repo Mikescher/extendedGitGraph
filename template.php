@@ -12,7 +12,16 @@ $DAY_WIDTH = 11;
 $DAY_HEIGHT = 11;
 
 
-$COLORS = ['#F5F5F5', '#DBDEE0', '#C2C7CB', '#AAB0B7', '#9099A2', '#77828E', '#5E6B79', '#455464', '#2C3E50'];
+//$COLORS = ['#F5F5F5', '#DBDEE0', '#C2C7CB', '#AAB0B7', '#9099A2', '#77828E', '#5E6B79', '#455464', '#2C3E50']; // CUSTOM
+//$COLORS = ["#ebedf0", "#c6e48b", "#7bc96f", "#239a3b", "#196127"]; // STANDARD
+//$COLORS = ["#afaca8", "#d6e685", "#8cc665", "#44a340", "#1e6823"]; // MODERN
+//$COLORS = ["#eeeeee", "#bdbdbd", "#9e9e9e", "#616161", "#212121"]; // GRAY
+//$COLORS = ["#eeeeee", "#ff7171", "#ff0000", "#b70000", "#830000"]; // RED
+$COLORS = ["#eeeeee", "#6bcdff", "#00a1f3", "#0079b7", "#003958"]; // BLUE
+//$COLORS = ["#eeeeee", "#d2ace6", "#aa66cc", "#660099", "#4f2266"]; // PURPLE
+//$COLORS = ["#eeeeee", "#ffcc80", "#ffa726", "#fb8c00", "#e65100"]; // ORANGE
+//$COLORS = ["#eeeeee", "#ffee4a", "#ffc501", "#fe9600", "#03001c"]; // HALLOWEEN
+
 $MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 $DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
