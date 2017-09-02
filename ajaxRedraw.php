@@ -14,8 +14,10 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 //##########################################################
 
 $v->setToken(file_get_contents('api_token.secret'));
-$v->collect();
+$v->loadData();
 
 //##########################################################
 
 $v->generateAndSave();
+
+echo $v->loadFinishedContent();

@@ -23,6 +23,19 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 		</script>
 
 		<script type="text/javascript" language="JavaScript">
+            function startAjaxRedraw() {
+                $('#drawdiv').html("");
+
+                jQuery.ajax({
+                    url:    'ajaxRedraw.php',
+                    success: function(result)
+                    {
+                        $('#drawdiv').html(result)
+                    },
+                    async:   true
+                });
+            }
+
 			function startAjaxRefresh()
 			{
 				$('#ajaxOutput').val("");
@@ -34,8 +47,10 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 							url:    'ajaxStatus.php',
 							success: function(result)
 							{
-								$('#ajaxOutput').val(result);
-								$('#ajaxOutput').scrollTop($('#ajaxOutput')[0].scrollHeight);
+                                var ajaxOutput = $('#ajaxOutput');
+
+                                ajaxOutput.val(result);
+                                ajaxOutput.scrollTop(ajaxOutput[0].scrollHeight);
 							},
 							async:   false
 						});
@@ -51,8 +66,10 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 							url:    'ajaxStatus.php',
 							success: function(result)
 							{
-								$('#ajaxOutput').val(result + '\r\n.');
-								$('#ajaxOutput').scrollTop($('#ajaxOutput')[0].scrollHeight);
+                                var ajaxOutput = $('#ajaxOutput');
+
+                                ajaxOutput.val(result + '\r\n.');
+                                ajaxOutput.scrollTop(ajaxOutput[0].scrollHeight);
 							},
 							async:   true
 						});
@@ -65,8 +82,10 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 							url:    'ajaxStatus.php',
 							success: function(result)
 							{
-								$('#ajaxOutput').val(result + '\r\n' + 'AN ERROR OCCURED:' + '\r\n' + textStatus);
-								$('#ajaxOutput').scrollTop($('#ajaxOutput')[0].scrollHeight);
+                                var ajaxOutput = $('#ajaxOutput');
+
+								ajaxOutput.val(result + '\r\n' + 'AN ERROR OCCURED:' + '\r\n' + textStatus);
+								ajaxOutput.scrollTop(ajaxOutput[0].scrollHeight);
 							},
 							async:   true
 						});
@@ -79,13 +98,19 @@ $v->addSecondaryRepository("Anastron/ColorRunner");
 
 	</head>
 	<body>
-		<?php echo $v->loadFinishedContent(); ?>
+        <div id="drawdiv" >
+		    <?php echo $v->loadFinishedContent(); ?>
+        </div>
 
-		<textarea style="width: 800px; height: 250px;" id="ajaxOutput" readonly="readonly"></textarea>
+        <a href="javascript:startAjaxRedraw()">[REDRAW]</a>
+
+        <br>
+
+		<textarea style="width: 800px; height: 250px;" id="ajaxOutput" readonly="readonly" title="?"></textarea>
 
 		<br>
 
-		<a href="javascript:startAjaxRefresh()">[REFRESH]</a>
+        <a href="javascript:startAjaxRefresh()">[REFRESH]</a>
 
 
 		<?php
