@@ -135,7 +135,7 @@ class EGHRenderer
 		$html = '';
 
 		$html .= '<div class="extGitGraphContainer">' . "\n";
-		$html .= '<svg class="git_list">' . "\n";
+		$html .= '<svg class="git_list" viewBox="0 0 715 115">' . "\n";
 		$html .= '<g transform="translate(20, 20) ">' . "\n";
 		$html .= '<g transform="translate(0, 0)">' . "\n";
 
