@@ -1,25 +1,57 @@
-jQuery(document).ready(function ($) {
-    $('.svg-tip').fadeOut(0);
-    $('.svg-tip').css({opacity: 1});
+function formatDate(date) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const days       = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    $("rect").mouseenter(
-        function (event) {
-            $('.svg-tip').stop(true, true);
+    let wday = days[date.getDay()];
+    let day = date.getDate();
+    let monthIndex = date.getMonth();
+    let year = date.getFullYear();
 
-            $('.svg-tip').fadeIn(400);
+    let suffix = 'th';
+    if (day === 1) suffix = 'st';
+    if (day === 2) suffix = 'nd';
+    if (day === 3) suffix = 'rd';
 
-            $('.svg-tip strong').html($(event.target).attr('hvr_header'));
-            $('.svg-tip span').html($(event.target).attr('hvr_content'));
+    return wday + ' ' + day + suffix + ' ' + monthNames[monthIndex] + ', ' + year;
+}
 
-            $('.svg-tip').css({left: $(event.target).position().left  - $('.svg-tip').outerWidth() /2 - 2.5 + 9});
-            $('.svg-tip').css({top:  $(event.target).position().top   - $('.svg-tip').outerHeight()   - 10});
+window.onload = function ()
+{
+    let svgtips = document.getElementsByClassName("svg-tip");
+    let rects   = document.getElementsByClassName("egg_rect");
 
-        }
-    );
-    $("rect").mouseleave(
-        function () {
-            $('.svg-tip').stop(true, true);
-            $('.svg-tip').fadeOut(400);
-        }
-    );
-});
+    let masterTip = null;
+
+    for (let tip of svgtips)
+    {
+        tip.style.opacity = '1';
+        tip.style.display = 'none';
+
+        masterTip = tip;
+    }
+
+    let masterTipHeader  = masterTip.getElementsByTagName('strong')[0];
+    let masterTipContent = masterTip.getElementsByTagName('span')[0];
+
+    for (let rect of rects)
+    {
+        rect.addEventListener("mouseenter", function(event)
+        {
+            let datesplit = event.target.getAttribute('data-date').split('-');
+            let count = event.target.getAttribute('data-count');
+            let date  = new Date(Number(datesplit[0]), Number(datesplit[1])-1, Number(datesplit[2]));
+
+            masterTip.style.display = 'block';
+
+            masterTipHeader.innerHTML = count + ' commits';
+            masterTipContent.innerHTML = ' on ' + formatDate(date);
+
+            masterTip.style.left = (window.pageXOffset + event.target.getBoundingClientRect().left - masterTip.getBoundingClientRect().width /2 - 3.5 + 9) + 'px';
+            masterTip.style.top  = (window.pageYOffset + event.target.getBoundingClientRect().top  - masterTip.getBoundingClientRect().height -10)         + 'px';
+        });
+        rect.addEventListener("mouseleave", function(event)
+        {
+            masterTip.style.display = 'none';
+        });
+    }
+};

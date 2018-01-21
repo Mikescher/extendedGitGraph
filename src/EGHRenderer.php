@@ -178,14 +178,15 @@ class EGHRenderer
 				$monthlist[$date->format('m') - 1][1] = $week + ($wday / 7);
 			}
 
-			$html .=  '<rect style="fill: ' . $color .
-				';" y="'          . $wday * self::DIST_Y .
-				'" height="'      . self::DAY_HEIGHT .
-				'" width="'       . self::DAY_WIDTH .
-				'" dbg_tag="'     . $date->format('d.m.Y') . ' [' . $year . ' :: '.$week.' :: '.$wday.'] -> ' . $color_idx .
-				'" hvr_header="'  . $c_count . ' commits'.
-				'" hvr_content="' . ' ' . $date->format('\o\n l jS F Y') .
-				'"/>' . "\n";
+			$html .=  '<rect'.
+				' style='            .'"fill:'.$color.';'     . '"' .
+				' y="'               . ($wday * self::DIST_Y) . '"' .
+				' height="'          . self::DAY_HEIGHT       . '"' .
+				' width="'           . self::DAY_WIDTH        . '"' .
+				' class="'           . 'egg_rect'             . '"' .
+				' data-count="'      . $c_count               . '"' .
+				' data-date="' . ' ' . $date->format('Y-m-d') . '"' .
+				'></rect>' . "\n";
 
 			$date = $date->modify("+1 day");
 		}
