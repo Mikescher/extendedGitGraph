@@ -69,6 +69,16 @@ $v->updateFromRemotes();
 
 Next call `generate()` to create HTML and get the snippets by calling `get()`.
 
+~~~php
+$v->setColorScheme('blue');
+$v->generate();
+
+foreach ($v->get() as $year => $html)
+{
+    file_put_contents(__DIR__ . '/../output/out_'.$year.'.html', $html);
+}
+~~~
+
 You can set the used color scheme with `setColorScheme`, supported are:
  - custom
  - standard
@@ -80,15 +90,10 @@ You can set the used color scheme with `setColorScheme`, supported are:
  - orange
  - halloween
 
-~~~php
-$v->setColorScheme('blue');
-$v->generate();
-
-foreach ($v->get() as $year => $html)
-{
-    file_put_contents(__DIR__ . '/../output/out_'.$year.'.html', $html);
-}
-~~~
+![](https://raw.githubusercontent.com/Mikescher/extendedGitGraph/master/README-DATA/preview_orange.png)  
+![](https://raw.githubusercontent.com/Mikescher/extendedGitGraph/master/README-DATA/preview_purple.png)  
+![](https://raw.githubusercontent.com/Mikescher/extendedGitGraph/master/README-DATA/preview_green.png)  
+![](https://raw.githubusercontent.com/Mikescher/extendedGitGraph/master/README-DATA/preview_red.png)  
 
 ### Reload with Ajax:
 
