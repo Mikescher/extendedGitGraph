@@ -1,0 +1,7 @@
+.idea
+*.dat
+*.secret
+/temp/*
+/output/*
+/demo/*
+ajaxSecret.php
