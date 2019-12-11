@@ -5,6 +5,9 @@ require_once 'Utils.php';
 interface IRemoteSource
 {
 	public function update();
+
+	/** @return string **/
+	public function getName();
 }
 
 class GithubConnection implements IRemoteSource
@@ -61,13 +64,13 @@ class GithubConnection implements IRemoteSource
 	}
 
 	public function queryAPIToken() {
-		$url = Utils::sharpFormat(self::URL_OAUTH_TOKEN, ['id'=>$this->oauth_id, 'secret'=>$this->secret, 'code'=>'egh']);
+		$url = Utils::sharpFormat(self::URL_OAUTH_TOKEN, ['id'=>$this->oauth_id, 'secret'=>$this->oauth_secret, 'code'=>'egg']);
 		$result = file_get_contents($url);
 
 		$result = str_replace('access_token=', '', $result);
 		$result = str_replace('&scope=&token_type=bearer', '', $result);
 
-		$this->logger->log("Updated Github API token");
+		$this->logger->proclog("Updated Github API token");
 
 		if ($result!=='' && $result !== null && $this->apitokenpath !== null)
 			file_put_contents($this->apitokenpath, $result);
@@ -78,7 +81,7 @@ class GithubConnection implements IRemoteSource
 	public function update() {
 		if ($this->apitoken === null) $this->queryAPIToken();
 
-		//TODO
+		$repos = $this->listRepositories();
 	}
 
 	public function listRepositories() {
@@ -94,7 +97,7 @@ class GithubConnection implements IRemoteSource
 		while (! empty($json)) {
 			foreach ($json as $result_repo) {
 				$result []= $result_repo->{'full_name'};
-				$this->logger->log("Found Repo: " . $result_repo->{'full_name'});
+				$this->logger->proclog("Found Repo: " . $result_repo->{'full_name'});
 			}
 
 			$page++;
@@ -104,6 +107,9 @@ class GithubConnection implements IRemoteSource
 
 		return $result;
 	}
+
+	/** @inheritDoc  */
+	public function getName() { return "[Github|".$this->filter."]"; }
 }
 
 class GiteaConnection implements IRemoteSource
@@ -138,4 +144,12 @@ class GiteaConnection implements IRemoteSource
 		$this->username     = $username;
 		$this->password     = $password;
 	}
+
+	public function update()
+	{
+		// TODO: Implement update() method.
+	}
+
+	/** @inheritDoc  */
+	public function getName() { return "[Gitea|".$this->url."|".$this->filter."]"; }
 }

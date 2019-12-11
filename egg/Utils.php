@@ -60,7 +60,7 @@ class Utils
 
 		if ($response === false)
 		{
-			$logger->log("Error recieving json: '" . $url . "'");
+			$logger->proclog("Error recieving json: '" . $url . "'");
 			return [];
 		}
 

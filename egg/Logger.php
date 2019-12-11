@@ -4,7 +4,7 @@ require_once 'Utils.php';
 
 interface ILogger
 {
-	public function log($text);
+	public function proclog($text);
 }
 
 class FileLogger implements ILogger
@@ -34,7 +34,7 @@ class FileLogger implements ILogger
 		$this->path = $f0;
 	}
 
-	public function log($text)
+	public function proclog($text)
 	{
 		if ($text !== '') $text = '[' . date('H:i:s') . '] ' . $text;
 
@@ -57,7 +57,7 @@ class SessionLogger implements ILogger
 		session_commit();
 	}
 
-	public function log($text)
+	public function proclog($text)
 	{
 		if ($text !== '') $text = '[' . date('H:i:s') . '] ' . $text;
 
@@ -70,7 +70,7 @@ class SessionLogger implements ILogger
 
 class OutputLogger implements ILogger
 {
-	public function log($text)
+	public function proclog($text)
 	{
 		if ($text !== '') $text = '[' . date('H:i:s') . '] ' . $text;
 

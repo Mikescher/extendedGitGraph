@@ -3,11 +3,11 @@
 return
 [
 	'output_logfile' => true,
-	'logfile'        => __DIR__ . "/../output/egh{num}.log",
+	'logfile'        => __DIR__ . "/../output/egg{num}.log",
 	'logfile_count'  => 8,
 
 	'output_session' => true,
-	'session_var'    => 'ajax_progress_egh_refresh',
+	'session_var'    => 'ajax_progress_egg_refresh',
 
 	'output_stdout'  => true,
 
