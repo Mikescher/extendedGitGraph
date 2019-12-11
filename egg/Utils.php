@@ -2,6 +2,11 @@
 
 class Utils
 {
+	/**
+	 * @param $str string
+	 * @param $args string[]
+	 * @return string
+	 */
 	public static function sharpFormat($str, $args)
 	{
 		foreach ($args as $key => $val)
@@ -11,10 +16,34 @@ class Utils
 		return $str;
 	}
 
+	/**
+	 * @param $haystack string
+	 * @param $needle string
+	 * @return bool
+	 */
 	public static function startsWith($haystack, $needle)
 	{
 		$length = strlen($needle);
 		return (substr($haystack, 0, $length) === $needle);
+	}
+
+	/**
+	 * @param $filter string
+	 * @param $name string
+	 * @return bool
+	 */
+	public static function isRepoFilterMatch($filter, $name)
+	{
+		$f0 = explode('/', $filter);
+		$f1 = explode('/', $name);
+
+		if (count($f0) !== 2) return false;
+		if (count($f1) !== 2) return false;
+
+		if ($f0[0] !== $f1[0] && $f0[0] !== '*') return false;
+		if ($f0[1] !== $f1[1] && $f0[1] !== '*') return false;
+
+		return true;
 	}
 
 	/**
@@ -61,6 +90,7 @@ class Utils
 		if ($response === false)
 		{
 			$logger->proclog("Error recieving json: '" . $url . "'");
+			$logger->proclog(print_r(error_get_last(), true));
 			return [];
 		}
 

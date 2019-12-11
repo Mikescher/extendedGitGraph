@@ -65,12 +65,14 @@ class GithubConnection implements IRemoteSource
 
 	public function queryAPIToken() {
 		$url = Utils::sharpFormat(self::URL_OAUTH_TOKEN, ['id'=>$this->oauth_id, 'secret'=>$this->oauth_secret, 'code'=>'egg']);
-		$result = file_get_contents($url);
+		$fullresult = $result = file_get_contents($url);
 
 		$result = str_replace('access_token=', '', $result);
 		$result = str_replace('&scope=&token_type=bearer', '', $result);
 
 		$this->logger->proclog("Updated Github API token");
+
+		if (Utils::startsWith($result, "error=")) throw new Exception($fullresult);
 
 		if ($result!=='' && $result !== null && $this->apitokenpath !== null)
 			file_put_contents($this->apitokenpath, $result);
@@ -94,8 +96,12 @@ class GithubConnection implements IRemoteSource
 
 		$json = Utils::getJSON($this->logger, $url, $this->apitoken);
 
-		while (! empty($json)) {
-			foreach ($json as $result_repo) {
+		while (! empty($json))
+		{
+			foreach ($json as $result_repo)
+			{
+				if (!Utils::isRepoFilterMatch($this->filter, $result_repo->{'full_name'})) continue;
+
 				$result []= $result_repo->{'full_name'};
 				$this->logger->proclog("Found Repo: " . $result_repo->{'full_name'});
 			}

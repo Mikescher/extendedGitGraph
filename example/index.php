@@ -12,19 +12,16 @@
 
 </head>
 <body>
-<textarea style="width: 800px; height: 250px;" id="ajaxOutput" readonly="readonly" title="?"></textarea>
+<textarea style="width: calc(100vw - 50px); height: calc(100vh - 100px);background-color: #333;color: #DDD;font-family: monospace;padding: 6px;" id="ajaxOutput" readonly="readonly"></textarea>
 
 <br>
 
 <a href="javascript:startAjaxUpdate()">[UPDATE]</a>
-<br />
-<br />
-<br />
-<br />
-
 
 <script type="text/javascript">
 	setInterval(refreshStatus, 500);
+
+	jQuery.ajax({url: 'ajaxStatus.php?clear=1', async: true });
 
 	let currentStatus = "N/A";
 
@@ -36,7 +33,7 @@
 			url:    'ajaxStatus.php',
 			success: function(result)
 			{
-				const newval = result + '\r\n.';
+				const newval = result;
 				if (newval === currentStatus) return;
 
 				ajaxOutput.val(currentStatus = newval);
