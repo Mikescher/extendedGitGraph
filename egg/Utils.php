@@ -96,4 +96,9 @@ class Utils
 
 		return json_decode($response);
 	}
+
+	public static function sqlnow()
+	{
+		return date("Y-m-d H:i:s");
+	}
 }

@@ -2,15 +2,19 @@
 
 require_once 'Logger.php';
 require_once 'RemoteSource.php';
+require_once 'EGGDatabase.php';
 require_once 'Utils.php';
 
 class ExtendedGitGraph2 implements ILogger
 {
-	/* @var ILogger[] */
+	/** @var ILogger[] **/
 	private $logger;
 
-	/* @var IRemoteSource[] */
+	/** @var IRemoteSource[] **/
 	private $sources;
+
+	/** @var EGGDatabase **/
+	private $db;
 
 	public function __construct($config)
 	{
@@ -20,20 +24,33 @@ class ExtendedGitGraph2 implements ILogger
 		if ($config['output_logfile']) $this->logger []= new FileLogger($config['logfile'], $config['logfile_count']);
 
 		$this->sources = [];
+
+		$sourcenames = [];
 		foreach ($config['remotes'] as $rmt)
 		{
+			$newsrc = null;
 			if ($rmt['type'] === 'github')
-				$this->sources []= new GithubConnection($this, $rmt['url'], $rmt['filter'], $rmt['oauth_id'], $rmt['oauth_secret'], $rmt['token_cache'] );
+				$newsrc = new GithubConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['oauth_id'], $rmt['oauth_secret'], $rmt['token_cache'] );
 			else if ($rmt['type'] === 'gitea')
-				$this->sources []= new GiteaConnection($this, $rmt['url'], $rmt['filter'], $rmt['username'], $rmt['password'] );
+				$newsrc = new GiteaConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['username'], $rmt['password'] );
 			else
 				throw new Exception("Unknown remote-type: " . $rmt['type']);
+
+			if (array_key_exists($newsrc->getName(), $sourcenames)) throw new Exception("Duplicate source name: " . $newsrc->getName());
+
+			$this->sources []= $newsrc;
+			$sourcenames   []= $newsrc->getName();
 		}
+
+		$this->db = new EGGDatabase($config['cache_file'], $this);
 	}
 
 	public function update()
 	{
-		try {
+		try
+		{
+			$this->db->open();
+
 			$this->proclog("Start incremental data update");
 			$this->proclog();
 
@@ -41,14 +58,19 @@ class ExtendedGitGraph2 implements ILogger
 			{
 				$this->proclog("======= UPDATE " . $src->getName() . " =======");
 
-				$src->update();
+				$src->update($this->db);
 
 				$this->proclog();
 			}
 
-			$this->proclog("Update finished.");
-		} catch (Exception $exception) {
+			$this->db->deleteOldSources(array_map(function ($v){ return $v->getName(); }, $this->sources));
 
+			$this->proclog("Update finished.");
+
+			$this->db->close();
+		}
+		catch (Exception $exception)
+		{
 			$this->proclog("(!) FATAL ERROR -- UNCAUGHT EXCEPTION THROWN");
 			$this->proclog();
 			$this->proclog($exception->getMessage());

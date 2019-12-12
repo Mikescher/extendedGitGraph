@@ -52,16 +52,17 @@ class SessionLogger implements ILogger
 	{
 		$this->sessionvar = $sessionvar;
 
-		if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-		$_SESSION[$sessionvar] = '';
-		session_commit();
+		if (session_status() !== PHP_SESSION_DISABLED)
+		{
+			if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+			$_SESSION[$sessionvar] = '';
+			session_commit();
+		}
 	}
 
 	public function proclog($text)
 	{
-		if ($text !== '') $text = '[' . date('H:i:s') . '] ' . $text;
-
-		if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+		if (session_status() === PHP_SESSION_DISABLED) return;
 
 		$_SESSION[$this->sessionvar] .= $text . "\r\n";
 		session_commit();

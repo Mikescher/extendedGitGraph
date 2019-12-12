@@ -1,13 +1,18 @@
 <?php
 
 require_once 'Utils.php';
+require_once 'EGGDatabase.php';
 
 interface IRemoteSource
 {
-	public function update();
+	/** @param $db EGGDatabase */
+	public function update($db);
 
 	/** @return string **/
 	public function getName();
+
+	/** @return string **/
+	public function toString();
 }
 
 class GithubConnection implements IRemoteSource
@@ -21,6 +26,9 @@ class GithubConnection implements IRemoteSource
 
 	/** @var ILogger $logger */
 	private $logger;
+
+	/** @var string $name */
+	private $name;
 
 	/** @var string $url */
 	private $url;
@@ -48,9 +56,10 @@ class GithubConnection implements IRemoteSource
 	 * @param string $oauth_secret
 	 * @param string $apitokenpath
 	 */
-	public function __construct($logger, $url, $filter, $oauth_id, $oauth_secret, $apitokenpath)
+	public function __construct($logger, $name, $url, $filter, $oauth_id, $oauth_secret, $apitokenpath)
 	{
 		$this->logger       = $logger;
+		$this->name         = $name;
 		$this->url          = $url;
 		$this->filter       = $filter;
 		$this->oauth_id     = $oauth_id;
@@ -80,13 +89,18 @@ class GithubConnection implements IRemoteSource
 		$this->apitoken = $result;
 	}
 
-	public function update() {
+	/** @inheritDoc  */
+	public function update($db) {
 		if ($this->apitoken === null) $this->queryAPIToken();
 
-		$repos = $this->listRepositories();
+		$repos = $this->listRepositories($db);
 	}
 
-	public function listRepositories() {
+	/**
+	 * @param $db EGGDatabase
+	 * @return Repository[]
+	 */
+	public function listRepositories($db) {
 		$f = explode('/', $this->filter);
 
 		$result = [];
@@ -102,8 +116,9 @@ class GithubConnection implements IRemoteSource
 			{
 				if (!Utils::isRepoFilterMatch($this->filter, $result_repo->{'full_name'})) continue;
 
-				$result []= $result_repo->{'full_name'};
-				$this->logger->proclog("Found Repo: " . $result_repo->{'full_name'});
+				$this->logger->proclog("Found Repo in Remote: " . $result_repo->{'full_name'});
+
+				$result []= $db->getOrCreateRepository($result_repo->{'html_url'}, $result_repo->{'full_name'}, $this->name);
 			}
 
 			$page++;
@@ -111,17 +126,25 @@ class GithubConnection implements IRemoteSource
 			$json = Utils::getJSON($this->logger, $url, $this->apitoken);
 		}
 
+		$db->deleteOtherRepositories($this->name, $result);
+
 		return $result;
 	}
 
 	/** @inheritDoc  */
-	public function getName() { return "[Github|".$this->filter."]"; }
+	public function getName() { return $this->name; }
+
+	/** @inheritDoc  */
+	public function toString() { return "[Github|".$this->filter."]"; }
 }
 
 class GiteaConnection implements IRemoteSource
 {
 	/** @var ILogger $logger */
 	private $logger;
+
+	/** @var string $name */
+	private $name;
 
 	/** @var string $url */
 	private $url;
@@ -137,25 +160,31 @@ class GiteaConnection implements IRemoteSource
 
 	/**
 	 * @param ILogger $logger
+	 * @param string $name
 	 * @param string $url
 	 * @param string $filter
 	 * @param string $username
 	 * @param string $password
 	 */
-	public function __construct($logger, $url, $filter, $username, $password)
+	public function __construct($logger, $name, $url, $filter, $username, $password)
 	{
 		$this->logger       = $logger;
+		$this->name         = $name;
 		$this->url          = $url;
 		$this->filter       = $filter;
 		$this->username     = $username;
 		$this->password     = $password;
 	}
 
-	public function update()
+	/** @inheritDoc  */
+	public function update($db)
 	{
 		// TODO: Implement update() method.
 	}
 
 	/** @inheritDoc  */
-	public function getName() { return "[Gitea|".$this->url."|".$this->filter."]"; }
+	public function getName() { return $this->name; }
+
+	/** @inheritDoc  */
+	public function toString() { return "[Gitea|".$this->url."|".$this->filter."]"; }
 }
