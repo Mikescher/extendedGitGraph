@@ -24,15 +24,14 @@ CREATE TABLE "branches"
 
 CREATE TABLE "commits"
 (
-	"id"             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-	"branch_id"      INTEGER NOT NULL,
-	"hash"           TEXT    NOT NULL,
-	"author_name"    TEXT    NOT NULL,
-	"author_mail"    TEXT    NOT NULL,
-	"committer_name" TEXT    NOT NULL,
-	"committer_mail" TEXT    NOT NULL,
-	"message"        TEXT    NOT NULL,
-	"date"           TEXT    NOT NULL,
-	"parent_commits" TEXT    NOT NULL,
-	"tags"           TEXT    NOT NULL
+	"id"              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+	"branch_id"       INTEGER NOT NULL,
+	"hash"            TEXT    NOT NULL,
+	"author_name"     TEXT    NOT NULL,
+	"author_email"    TEXT    NOT NULL,
+	"committer_name"  TEXT    NOT NULL,
+	"committer_email" TEXT    NOT NULL,
+	"message"         TEXT    NOT NULL,
+	"date"            TEXT    NOT NULL,
+	"parent_commits"  TEXT    NOT NULL
 );

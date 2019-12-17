@@ -6,7 +6,7 @@ require_once 'EGGDatabase.php';
 interface IRemoteSource
 {
 	/** @param $db EGGDatabase */
-	public function update($db);
+	public function update(EGGDatabase $db);
 
 	/** @return string **/
 	public function getName();
@@ -22,7 +22,7 @@ class GithubConnection implements IRemoteSource
 
 	const API_RATELIMIT        = 'https://api.github.com/rate_limit';
 	const API_REPOSITORIESLIST = 'https://api.github.com/users/{user}/repos?page={page}&per_page=100';
-	const API_COMMITSLIST      = 'https://api.github.com/repos/{repo}/commits?per_page=100&page={page}&author={author}';
+	const API_COMMITSLIST      = 'https://api.github.com/repos/{repo}/commits?per_page=100&sha={sha}';
 	const API_BRANCHLIST       = 'https://api.github.com/repos/{repo}/branches';
 
 	/** @var ILogger $logger */
@@ -102,7 +102,7 @@ class GithubConnection implements IRemoteSource
 	/** @inheritDoc
 	 * @throws Exception
 	 */
-	public function update($db) {
+	public function update(EGGDatabase $db) {
 		if ($this->apitoken === null) $this->queryAPIToken();
 
 		$repos = $this->listAndUpdateRepositories($db);
@@ -110,20 +110,42 @@ class GithubConnection implements IRemoteSource
 		foreach ($repos as $repo)
 		{
 			$branches = $this->listAndUpdateBranches($db, $repo);
+			$db->setUpdateDateOnRepository($repo);
 
+			$repo_changed = false;
 			foreach ($branches as $branch)
 			{
-				//TODO
+				if ($branch->HeadFromAPI === $branch->Head)
+				{
+					$db->setUpdateDateOnBranch($branch);
+					$this->logger->proclog("Branch: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "] is up to date");
+					continue;
+				}
+
+				$commits = $this->listAndUpdateCommits($db, $repo, $branch);
+				$db->setUpdateDateOnBranch($branch);
+				if (count($commits) === 0)
+				{
+					$this->logger->proclog("Branch: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "] has no new commits");
+					continue;
+				}
+
+				$this->logger->proclog("Found " . count($commits) . " new commits in Branch: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "]");
+
+				$repo_changed = true;
+				$db->setChangeDateOnBranch($branch);
 			}
+
+			if ($repo_changed) $db->setChangeDateOnRepository($repo);
 		}
 	}
 
 	/**
-	 * @param $db EGGDatabase
+	 * @param EGGDatabase $db
 	 * @return Repository[]
 	 * @throws Exception
 	 */
-	public function listAndUpdateRepositories($db) {
+	private function listAndUpdateRepositories(EGGDatabase $db) {
 		$f = explode('/', $this->filter);
 
 		$result = [];
@@ -155,12 +177,12 @@ class GithubConnection implements IRemoteSource
 	}
 
 	/**
-	 * @param $db EGGDatabase
-	 * @param $repo Repository
+	 * @param EGGDatabase $db
+	 * @param Repository $repo
 	 * @return Branch[]
 	 * @throws Exception
 	 */
-	public function listAndUpdateBranches($db, $repo) {
+	private function listAndUpdateBranches(EGGDatabase $db, Repository $repo) {
 
 		$url = Utils::sharpFormat(self::API_BRANCHLIST, ['repo' => $repo->Name]);
 
@@ -183,6 +205,99 @@ class GithubConnection implements IRemoteSource
 		$db->deleteOtherBranches($this->name, $repo, $result);
 
 		return $result;
+	}
+
+	/**
+	 * @param EGGDatabase $db
+	 * @param Repository $repo
+	 * @param Branch $branch
+	 * @return Commit[]
+	 * @throws Exception
+	 */
+	private function listAndUpdateCommits(EGGDatabase $db, Repository $repo, Branch $branch) {
+
+		$newcommits = [];
+
+		if ($branch->HeadFromAPI === null) return [];
+
+		$target = $branch->Head;
+
+		$next_sha = [ $branch->HeadFromAPI ];
+		$visited = [ $branch->HeadFromAPI ];
+
+		$url = Utils::sharpFormat(self::API_COMMITSLIST, [ 'repo'=>$repo->Name, 'sha'=>$next_sha[0] ]);
+		$this->logger->proclog("Query commits from: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "] starting at {" . substr($next_sha[0], 0, 8) . "}");
+		$json = Utils::getJSON($this->logger, $url, $this->apitoken);
+		for (;;)
+		{
+			foreach ($json as $result_commit)
+			{
+				$sha             = $result_commit->{'sha'};
+				$author_name     = $result_commit->{'commit'}->{'author'}->{'name'};
+				$author_email    = $result_commit->{'commit'}->{'author'}->{'email'};
+				$committer_name  = $result_commit->{'commit'}->{'committer'}->{'name'};
+				$committer_email = $result_commit->{'commit'}->{'committer'}->{'email'};
+				$message         = $result_commit->{'commit'}->{'message'};
+				$date            = (new DateTime($result_commit->{'commit'}->{'author'}->{'date'}))->format("Y-m-d H:i:s");
+
+				$parents = array_map(function ($v){ return $v->{'sha'}; }, $result_commit->{'parents'});
+
+				if (($rmshakey = array_search($sha, $next_sha)) !== false) unset($next_sha[$rmshakey]);
+
+				if (in_array($sha, $visited)) continue;
+				$visited []= $sha;
+
+				if ($sha === $target && count($next_sha) === 0)
+				{
+					if (count($newcommits) === 0)
+					{
+						$this->logger->proclog("Found no new commits for: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "]  (HEAD at {" . substr($next_sha[0], 0, 8) . "})");
+						return [];
+					}
+
+					$db->insertNewCommits($this->name, $repo, $branch, $newcommits);
+					$db->setBranchHead($branch, $branch->HeadFromAPI);
+
+					return $newcommits;
+				}
+
+				$commit = new Commit();
+				$commit->Branch         = $branch;
+				$commit->Hash           = $sha;
+				$commit->AuthorName     = $author_name;
+				$commit->AuthorEmail    = $author_email;
+				$commit->CommitterName  = $committer_name;
+				$commit->CommitterEmail = $committer_email;
+				$commit->Message        = $message;
+				$commit->Date           = $date;
+				$commit->Parents        = $parents;
+
+				$newcommits []= $commit;
+
+				foreach ($parents as $p)
+				{
+					$next_sha []= $p;
+				}
+			}
+
+			$next_sha = array_values($next_sha); // fix numeric keys
+			if (count($next_sha) === 0) break;
+
+			$url = Utils::sharpFormat(self::API_COMMITSLIST, [ 'repo'=>$repo->Name, 'sha'=>$next_sha[0] ]);
+			$this->logger->proclog("Query commits from: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "] continuing at {" . substr($next_sha[0], 0, 8) . "}");
+			$json = Utils::getJSON($this->logger, $url, $this->apitoken);
+		}
+
+		$this->logger->proclog("HEAD pointer in Branch: [" . $this->name . "|" . $repo->Name . "|" . $branch->Name . "] no longer matches. Re-query all " . count($newcommits) . " commits (old HEAD := {".substr($branch->Head, 0, 8)."})");
+
+		$db->deleteAllCommits($branch);
+
+		if (count($newcommits) === 0) return [];
+
+		$db->insertNewCommits($this->name, $repo, $branch, $newcommits);
+		$db->setBranchHead($branch, $branch->HeadFromAPI);
+
+		return $newcommits;
 	}
 
 	/** @inheritDoc  */
@@ -236,7 +351,7 @@ class GiteaConnection implements IRemoteSource
 	}
 
 	/** @inheritDoc  */
-	public function update($db)
+	public function update(EGGDatabase $db)
 	{
 		// TODO: Implement update() method.
 	}

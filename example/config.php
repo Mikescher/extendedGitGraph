@@ -13,6 +13,8 @@ return
 
 	'cache_file'     => __DIR__ . "/../output/cache.sqlite3",
 
+	'identities'     => [ 'mailport@mikescher.de', 'mailport@mikescher.com', 'pubgit@mikescher.com' ],
+
 	'remotes' =>
 	[
 		[

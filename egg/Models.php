@@ -15,10 +15,10 @@ class Repository
 	public $Source;
 
 	/** @var string */
-	public $LastUpdate;
+	public $LastUpdate; // UTC
 
 	/** @var string */
-	public $LastChange;
+	public $LastChange; // UTC
 }
 
 class Branch
@@ -39,13 +39,45 @@ class Branch
 	public $HeadFromAPI = null;
 
 	/** @var string */
-	public $LastUpdate;
+	public $LastUpdate; // UTC
 
 	/** @var string */
-	public $LastChange;
+	public $LastChange; // UTC
 }
 
 class Commit
 {
+	/** @var int */
+	public $ID;
+
+	/** @var Repository */
+	public $Repo;
+
+	/** @var Branch */
+	public $Branch;
+
+	/** @var string */
+	public $Hash;
+
+	/** @var string */
+	public $AuthorName;
+
+	/** @var string */
+	public $AuthorEmail;
+
+	/** @var string */
+	public $CommitterName;
+
+	/** @var string */
+	public $CommitterEmail;
+
+	/** @var string */
+	public $Message;
+
+	/** @var string */
+	public $Date; // UTC
+
+	/** @var string[] */
+	public $Parents;
 
 }

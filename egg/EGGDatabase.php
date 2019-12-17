@@ -31,6 +31,8 @@ class EGGDatabase
 	{
 		$exists = file_exists($this->path);
 
+		if (!$exists) $this->logger->proclog("No database file found. Creating new at '" . $this->path . "'");
+
 		$dsn = "sqlite:" . $this->path;
 		$opt =
 		[
@@ -131,9 +133,9 @@ class EGGDatabase
 					[":url", $url, PDO::PARAM_STR],
 				]);
 
-			if (count($repo) === 0) throw new Exception("No repo after insert [" . $source . " | " . $name . "]");
+			if (count($repo) === 0) throw new Exception("No repo after insert [" . $source . "|" . $name . "]");
 
-			$this->logger->proclog("Inserted (new) repository [" . $source . " | " . $name . "] into database");
+			$this->logger->proclog("Inserted (new) repository [" . $source . "|" . $name . "] into database");
 		}
 
 		$r = new Repository();
@@ -157,7 +159,7 @@ class EGGDatabase
 	{
 		$branch = $this->sql_query_assoc_prep("SELECT * FROM branches WHERE repo_id = :rid AND name = :nam",
 			[
-				[":rid", $repo->ID, PDO::PARAM_STR],
+				[":rid", $repo->ID, PDO::PARAM_INT],
 				[":nam", $name,     PDO::PARAM_STR],
 			]);
 
@@ -165,7 +167,7 @@ class EGGDatabase
 		{
 			$this->sql_exec_prep("INSERT INTO branches (repo_id, name, head, last_update, last_change) VALUES (:rid, :nam, :sha, :lu, :lc)",
 				[
-					[":rid", $repo->ID,       PDO::PARAM_STR],
+					[":rid", $repo->ID,       PDO::PARAM_INT],
 					[":nam", $name,           PDO::PARAM_STR],
 					[":sha", null,            PDO::PARAM_STR],
 					[":lu",  Utils::sqlnow(), PDO::PARAM_STR],
@@ -174,13 +176,13 @@ class EGGDatabase
 
 			$branch = $this->sql_query_assoc_prep("SELECT * FROM branches WHERE repo_id = :rid AND name = :nam",
 				[
-					[":rid", $repo->ID, PDO::PARAM_STR],
+					[":rid", $repo->ID, PDO::PARAM_INT],
 					[":nam", $name,     PDO::PARAM_STR],
 				]);
 
-			if (count($branch) === 0) throw new Exception("No branch after insert [" . $source . " | " . $repo->Name  . " | " . $name . "]");
+			if (count($branch) === 0) throw new Exception("No branch after insert [" . $source . "|" . $repo->Name  . "|" . $name . "]");
 
-			$this->logger->proclog("Inserted (new) branch [" . $source . " | " . $repo->Name  . " | " . $name . "] into database");
+			$this->logger->proclog("Inserted (new) branch [" . $source . "|" . $repo->Name  . "|" . $name . "] into database");
 		}
 
 		$r = new Branch();
@@ -194,8 +196,99 @@ class EGGDatabase
 	}
 
 	/**
-	 * @param $source string
-	 * @param $branches Branch[]
+	 * @param string $source
+	 * @param Repository $repo
+	 * @param Branch $branch
+	 * @param Commit[] $commits
+	 */
+	public function insertNewCommits(string $source, Repository $repo, Branch $branch, array $commits) {
+		$this->logger->proclog("Inserted " . count($commits) . " (new) commits into [" . $source . "|" . $repo->Name  . "|" . $branch->Name . "]");
+
+		foreach ($commits as $commit)
+		{
+			$strparents = implode(";", $commit->Parents);
+
+			$this->sql_exec_prep("INSERT INTO commits ([branch_id], [hash], [author_name], [author_email], [committer_name], [committer_email], [message], [date], [parent_commits]) VALUES (:brid, :sha, :an, :am, :cn, :cm, :msg, :dat, :prt)",
+				[
+					[":brid", $branch->ID,             PDO::PARAM_INT],
+					[":sha",  $commit->Hash,           PDO::PARAM_STR],
+					[":an",   $commit->AuthorName,     PDO::PARAM_STR],
+					[":am",   $commit->AuthorEmail,    PDO::PARAM_STR],
+					[":cn",   $commit->CommitterName,  PDO::PARAM_STR],
+					[":cm",   $commit->CommitterEmail, PDO::PARAM_STR],
+					[":msg",  $commit->Message,        PDO::PARAM_STR],
+					[":dat",  $commit->Date,           PDO::PARAM_STR],
+					[":prt",  $strparents,             PDO::PARAM_STR],
+				]);
+
+			$dbid = $this->sql_query_assoc_prep("SELECT id FROM commits WHERE [branch_id] = :brid AND [Hash] = :sha",
+				[
+					[":brid", $branch->ID,             PDO::PARAM_INT],
+					[":sha",  $commit->Hash,           PDO::PARAM_STR],
+				]);
+
+			$commit->ID = $dbid[0]['id'];
+		}
+	}
+
+	/**
+	 * @param Branch $branch
+	 * @param string $head
+	 */
+	public function setBranchHead(Branch $branch, string $head) {
+		$this->sql_exec_prep("UPDATE branches SET head = :head WHERE id = :id",
+			[
+				[":id",   $branch->ID, PDO::PARAM_INT],
+				[":head", $head,       PDO::PARAM_STR],
+			]);
+
+		$branch->Head = $head;
+	}
+
+	public function setUpdateDateOnRepository(Repository $repo) {
+		$now = Utils::sqlnow();
+		$this->sql_exec_prep("UPDATE repositories SET last_update = :now WHERE id = :id",
+			[
+				[":id",  $repo->ID, PDO::PARAM_INT],
+				[":now", $now,      PDO::PARAM_STR],
+			]);
+		$repo->LastUpdate = $now;
+	}
+
+	public function setChangeDateOnRepository(Repository $repo) {
+		$now = Utils::sqlnow();
+		$this->sql_exec_prep("UPDATE repositories SET last_change = :now WHERE id = :id",
+			[
+				[":id",  $repo->ID, PDO::PARAM_INT],
+				[":now", $now,      PDO::PARAM_STR],
+			]);
+		$repo->LastChange = $now;
+	}
+
+	public function setUpdateDateOnBranch(Branch $branch) {
+		$now = Utils::sqlnow();
+		$this->sql_exec_prep("UPDATE branches SET last_update = :now WHERE id = :id",
+			[
+				[":id",  $branch->ID, PDO::PARAM_INT],
+				[":now", $now,        PDO::PARAM_STR],
+			]);
+		$branch->LastUpdate = $now;
+	}
+
+	public function setChangeDateOnBranch(Branch $branch) {
+		$now = Utils::sqlnow();
+		$this->sql_exec_prep("UPDATE branches SET last_change = :now WHERE id = :id",
+			[
+				[":id",  $branch->ID, PDO::PARAM_INT],
+				[":now", $now,        PDO::PARAM_STR],
+			]);
+		$branch->LastChange = $now;
+	}
+
+	/**
+	 * @param string $source
+	 * @param Repository $repo
+	 * @param Branch[] $branches
 	 */
 	public function deleteOtherBranches(string $source, Repository $repo, array $branches)
 	{
@@ -214,8 +307,8 @@ class EGGDatabase
 	}
 
 	/**
-	 * @param $source string
-	 * @param $repos Repository[]
+	 * @param string $source
+	 * @param Repository[] $repos
 	 */
 	public function deleteOtherRepositories(string $source, array $repos)
 	{
@@ -240,7 +333,7 @@ class EGGDatabase
 	 */
 	private function deleteRepositoryRecursive(string $source, string $name, int $id)
 	{
-		$this->logger->proclog("Delete repository [".$source." | " . $name . "] from database (no longer exists)");
+		$this->logger->proclog("Delete repository [".$source."|" . $name . "] from database (no longer exists)");
 
 		$branches = $this->sql_query_assoc_prep("SELECT id FROM branches WHERE repo_id = :rid", [ [":rid", $id, PDO::PARAM_INT] ]);
 
@@ -257,10 +350,17 @@ class EGGDatabase
 	 */
 	private function deleteBranchRecursive(string $source, string $reponame, string $name, int $id)
 	{
-		$this->logger->proclog("Delete branch [" . $source . " | " . $reponame . " | " . $name . "] from database (no longer exists)");
+		$this->logger->proclog("Delete branch [" . $source . "|" . $reponame . "|" . $name . "] from database (no longer exists)");
 
 		$this->sql_exec_prep("DELETE FROM branches WHERE id = :bid",       [[":bid", $id, PDO::PARAM_INT]]);
 		$this->sql_exec_prep("DELETE FROM commits WHERE branch_id = :bid", [[":bid", $id, PDO::PARAM_INT]]);
+	}
+
+	/**
+	 * @param Branch $branch
+	 */
+	public function deleteAllCommits(Branch $branch) {
+		$this->sql_exec_prep("DELETE FROM commits WHERE branch_id = :bid", [[":bid", $branch->ID, PDO::PARAM_INT]]);
 	}
 
 	public function deleteOldSources(array $sources)

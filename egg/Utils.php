@@ -110,6 +110,6 @@ class Utils
 	 */
 	public static function sqlnow()
 	{
-		return date("Y-m-d H:i:s");
+		return gmdate("Y-m-d H:i:s");
 	}
 }
