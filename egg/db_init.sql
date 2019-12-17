@@ -1,9 +1,9 @@
 CREATE TABLE "repositories"
 (
 	"id"             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-	"url"            TEXT    NOT NULL UNIQUE,
-	"name"           TEXT    NOT NULL,
 	"source"         TEXT    NOT NULL,
+	"name"           TEXT    NOT NULL,
+	"url"            TEXT    NOT NULL UNIQUE,
 	"last_update"    TEXT    NOT NULL,
 	"last_change"    TEXT    NOT NULL
 );
@@ -15,7 +15,7 @@ CREATE TABLE "branches"
 	"id"             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
 	"repo_id"	     INTEGER NOT NULL,
 	"name"           TEXT    NOT NULL,
-	"head"           TEXT    NOT NULL,
+	"head"           TEXT,
 	"last_update"    TEXT    NOT NULL,
 	"last_change"    TEXT    NOT NULL
 );

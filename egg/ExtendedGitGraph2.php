@@ -16,7 +16,11 @@ class ExtendedGitGraph2 implements ILogger
 	/** @var EGGDatabase **/
 	private $db;
 
-	public function __construct($config)
+	/**
+	 * @param array $config
+	 * @throws Exception
+	 */
+	public function __construct(array $config)
 	{
 		$this->logger = [];
 		if ($config['output_session']) $this->logger []= new SessionLogger($config['session_var']);
@@ -30,9 +34,9 @@ class ExtendedGitGraph2 implements ILogger
 		{
 			$newsrc = null;
 			if ($rmt['type'] === 'github')
-				$newsrc = new GithubConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['oauth_id'], $rmt['oauth_secret'], $rmt['token_cache'] );
+				$newsrc = new GithubConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['exclusions'], $rmt['oauth_id'], $rmt['oauth_secret'], $rmt['token_cache'] );
 			else if ($rmt['type'] === 'gitea')
-				$newsrc = new GiteaConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['username'], $rmt['password'] );
+				$newsrc = new GiteaConnection($this, $rmt['name'], $rmt['url'], $rmt['filter'], $rmt['exclusions'], $rmt['username'], $rmt['password'] );
 			else
 				throw new Exception("Unknown remote-type: " . $rmt['type']);
 
@@ -63,7 +67,7 @@ class ExtendedGitGraph2 implements ILogger
 				$this->proclog();
 			}
 
-			$this->db->deleteOldSources(array_map(function ($v){ return $v->getName(); }, $this->sources));
+			$this->db->deleteOldSources(array_map(function (IRemoteSource $v){ return $v->getName(); }, $this->sources));
 
 			$this->proclog("Update finished.");
 

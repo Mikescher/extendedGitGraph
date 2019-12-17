@@ -3,11 +3,11 @@
 class Utils
 {
 	/**
-	 * @param $str string
-	 * @param $args string[]
+	 * @param string $str
+	 * @param string[] $args
 	 * @return string
 	 */
-	public static function sharpFormat($str, $args)
+	public static function sharpFormat(string $str, array $args)
 	{
 		foreach ($args as $key => $val)
 		{
@@ -17,23 +17,29 @@ class Utils
 	}
 
 	/**
-	 * @param $haystack string
-	 * @param $needle string
+	 * @param string $haystack
+	 * @param string $needle
 	 * @return bool
 	 */
-	public static function startsWith($haystack, $needle)
+	public static function startsWith(string $haystack, string $needle)
 	{
 		$length = strlen($needle);
 		return (substr($haystack, 0, $length) === $needle);
 	}
 
 	/**
-	 * @param $filter string
-	 * @param $name string
+	 * @param string $filter
+	 * @param string[] $exclusions
+	 * @param string $name
 	 * @return bool
 	 */
-	public static function isRepoFilterMatch($filter, $name)
+	public static function isRepoFilterMatch(string $filter, array $exclusions, string $name)
 	{
+		foreach ($exclusions as $ex)
+		{
+			if (strtolower($ex) === strtolower($name)) return false;
+		}
+
 		$f0 = explode('/', $filter);
 		$f1 = explode('/', $name);
 
@@ -47,9 +53,9 @@ class Utils
 	}
 
 	/**
-	 * @param $logger ILogger
-	 * @param $url string
-	 * @param $authtoken string
+	 * @param ILogger $logger
+	 * @param string $url
+	 * @param string $authtoken
 	 * @return array|mixed
 	 */
 	public static function getJSON($logger, $url, $authtoken) {
@@ -74,16 +80,18 @@ class Utils
 						[
 							'user_agent' => 'ExtendedGitGraph_for_mikescher.com',
 							'header' => 'Authorization: token ' . $authtoken,
+							'ignore_errors' => true,
 						],
 					'https' =>
 						[
 							'user_agent' => 'ExtendedGitGraph_for_mikescher.com',
 							'header' => 'Authorization: token ' . $authtoken,
+							'ignore_errors' => true,
 						],
 				];
 		}
 
-		$context  = stream_context_create($options);
+			$context  = stream_context_create($options);
 
 		$response = @file_get_contents($url, false, $context);
 
@@ -97,6 +105,9 @@ class Utils
 		return json_decode($response);
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function sqlnow()
 	{
 		return date("Y-m-d H:i:s");
