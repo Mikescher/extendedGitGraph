@@ -2,18 +2,19 @@
 
 return
 [
-	'output_logfile' => true,
-	'logfile'        => __DIR__ . "/../output/egg{num}.log",
-	'logfile_count'  => 8,
+	'output_logfile'     => true,
+	'logfile'            => __DIR__ . "/../output/egg{num}.log",
+	'logfile_count'      => 8,
 
-	'output_session' => true,
-	'session_var'    => 'ajax_progress_egg_refresh',
+	'output_session'     => true,
+	'session_var'        => 'ajax_progress_egg_refresh',
 
-	'output_stdout'  => true,
+	'output_stdout'      => true,
 
-	'cache_file'     => __DIR__ . "/../output/cache.sqlite3",
+	'data_cache_file'    => __DIR__ . "/../output/cache.sqlite3",
+	'output_cache_files' => __DIR__ . "/../output/cache_{ident}.html",
 
-	'identities'     => [ 'mailport@mikescher.de', 'mailport@mikescher.com', 'pubgit@mikescher.com' ],
+	'identities'         => [ 'mailport@mikescher.de', 'mailport@mikescher.com', 'pubgit@mikescher.com' ],
 
 	'remotes' =>
 	[

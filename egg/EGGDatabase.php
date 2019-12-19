@@ -381,4 +381,50 @@ class EGGDatabase
 			}
 		}
 	}
+
+	/**
+	 * @param int $year
+	 * @param string[] $identities
+	 * @return array
+	 */
+	public function getCommitCountOfYearByDate(int $year, array $identities): array
+	{
+		$sql = file_get_contents(__DIR__ . "/db_queryyear.sql");
+
+		$cond = "(1=0)";
+		$prep =
+			[
+				[":bid", "".$year, PDO::PARAM_STR]
+			];
+		$i=0;
+		foreach ($identities as $ident)
+		{
+			$cond .= " OR (mail1=:_".$i."_)";
+			$prep []= [":_".$i."_", $ident, PDO::PARAM_STR];
+			$i++;
+			$cond .= " OR (mail2=:_".$i."_)";
+			$prep []= [":_".$i."_", $ident, PDO::PARAM_STR];
+			$i++;
+		}
+
+		$sql = str_replace("/*{INDETITY_COND}*/", $cond, $sql);
+
+		$rows = $this->sql_query_assoc_prep($sql, $prep);
+
+		$r = [];
+		foreach ($rows as $row) $r[$row['commitdate']] = $row['count'];
+
+		return $r;
+	}
+
+	/**
+	 * @return int[]
+	 */
+	public function getAllYears(): array
+	{
+		$rows = $this->sql_query_assoc("SELECT d FROM (SELECT cast(strftime('%Y', commits.date) as decimal) AS d FROM commits) GROUP BY d ORDER BY d");
+		$r = [];
+		foreach ($rows as $row) $r []= $row['d'];
+		return $r;
+	}
 }

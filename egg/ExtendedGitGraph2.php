@@ -2,6 +2,7 @@
 
 require_once 'Logger.php';
 require_once 'RemoteSource.php';
+require_once 'OutputGenerator.php';
 require_once 'EGGDatabase.php';
 require_once 'Utils.php';
 
@@ -12,6 +13,9 @@ class ExtendedGitGraph2 implements ILogger
 
 	/** @var IRemoteSource[] **/
 	private $sources;
+
+	/** @var IOutputGenerator[] **/
+	private $outputter;
 
 	/** @var EGGDatabase **/
 	private $db;
@@ -46,7 +50,9 @@ class ExtendedGitGraph2 implements ILogger
 			$sourcenames   []= $newsrc->getName();
 		}
 
-		$this->db = new EGGDatabase($config['cache_file'], $this);
+		$this->db = new EGGDatabase($config['data_cache_file'], $this);
+
+		$this->outputter = new SingleYearRenderer(2019, $config['identities'], $config['output_cache_files']);
 	}
 
 	public function update()
@@ -81,6 +87,11 @@ class ExtendedGitGraph2 implements ILogger
 			$this->proclog();
 			$this->proclog($exception->getTraceAsString());
 		}
+	}
+
+	public function updateOutput()
+	{
+		$this->outputter->updateCache();
 	}
 
 	public function proclog($text = '')
