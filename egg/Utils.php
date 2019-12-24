@@ -112,4 +112,15 @@ class Utils
 	{
 		return gmdate("Y-m-d H:i:s");
 	}
+
+	/**
+	 * @param int $n0
+	 * @param array $dbdata
+	 * @return int
+	 */
+	public static function array_value_max(int $n0, array $dbdata): int
+	{
+		foreach ($dbdata as $_ => $val) $n0 = max($n0, $val);
+		return $n0;
+	}
 }

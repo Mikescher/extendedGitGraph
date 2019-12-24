@@ -394,15 +394,15 @@ class EGGDatabase
 		$cond = "(1=0)";
 		$prep =
 			[
-				[":bid", "".$year, PDO::PARAM_STR]
+				[":year", "".$year, PDO::PARAM_STR]
 			];
 		$i=0;
 		foreach ($identities as $ident)
 		{
-			$cond .= " OR (mail1=:_".$i."_)";
+			$cond .= " OR (mail1 = :_".$i."_)";
 			$prep []= [":_".$i."_", $ident, PDO::PARAM_STR];
 			$i++;
-			$cond .= " OR (mail2=:_".$i."_)";
+			$cond .= " OR (mail2 = :_".$i."_)";
 			$prep []= [":_".$i."_", $ident, PDO::PARAM_STR];
 			$i++;
 		}

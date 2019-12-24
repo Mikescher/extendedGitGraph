@@ -18,6 +18,12 @@
 
 <a href="javascript:startAjaxUpdate()">[UPDATE]</a>
 
+<a href="javascript:startAjaxUpdateCache()">[GENERATE]</a>
+
+<a href="javascript:startAjaxGetFromCache()">[SHOW]</a>
+
+<div id="output">&nbsp;</div>
+
 <script type="text/javascript">
 	setInterval(refreshStatus, 500);
 
@@ -53,18 +59,43 @@
 	}
 
 	function startAjaxUpdate()
-    {
-
+	{
 		jQuery.ajax({
 			url:    'ajaxUpdate.php',
 			success: function(result)
 			{
-				console.log("Started [ajaxUpdate]");
+				//
 			},
 			error: function( jqXHR, textStatus, errorThrown) { alert(textStatus+"\r\n"+errorThrown); } ,
 			async:   true
 		});
-    }
+	}
+
+	function startAjaxUpdateCache()
+	{
+		jQuery.ajax({
+			url:    'ajaxUpdateCache.php',
+			success: function(result)
+			{
+				console.log("Started [ajaxUpdateCache]");
+			},
+			error: function( jqXHR, textStatus, errorThrown) { alert(textStatus+"\r\n"+errorThrown); } ,
+			async:   true
+		});
+	}
+
+	function startAjaxGetFromCache()
+	{
+		jQuery.ajax({
+			url:    'ajaxGetFromCache.php',
+			success: function(result)
+			{
+				$('#ajaxOutput').innerHTML(result);
+			},
+			error: function( jqXHR, textStatus, errorThrown) { alert(textStatus+"\r\n"+errorThrown); } ,
+			async:   true
+		});
+	}
 </script>
 
 </body>

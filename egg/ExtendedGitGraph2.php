@@ -52,7 +52,7 @@ class ExtendedGitGraph2 implements ILogger
 
 		$this->db = new EGGDatabase($config['data_cache_file'], $this);
 
-		$this->outputter = new SingleYearRenderer(2019, $config['identities'], $config['output_cache_files']);
+		$this->outputter = new FullRenderer($this, $config['identities'], $config['output_cache_files']);
 	}
 
 	public function update()
@@ -89,9 +89,56 @@ class ExtendedGitGraph2 implements ILogger
 		}
 	}
 
-	public function updateOutput()
+	public function updateCache(): string
 	{
-		$this->outputter->updateCache();
+		try
+		{
+			$this->db->open();
+
+			$this->proclog("Start update cache");
+			$this->proclog();
+
+			$data = $this->outputter->updateCache($this->db);
+
+			$this->db->close();
+			$this->proclog("UpdateCache finished.");
+
+			return $data;
+		}
+		catch (Exception $exception)
+		{
+			$this->proclog("(!) FATAL ERROR -- UNCAUGHT EXCEPTION THROWN");
+			$this->proclog();
+			$this->proclog($exception->getMessage());
+			$this->proclog();
+			$this->proclog($exception->getTraceAsString());
+		}
+	}
+
+	public function loadFromCache(): string
+	{
+		try
+		{
+			$this->db->open();
+
+			$this->proclog("Start load from cache");
+			$this->proclog();
+
+			$data = $this->outputter->loadFromCache();
+
+			$this->db->close();
+			$this->proclog("LoadFromCache finished.");
+
+			return $data;
+		}
+		catch (Exception $exception)
+		{
+			$this->proclog("(!) FATAL ERROR -- UNCAUGHT EXCEPTION THROWN");
+			$this->proclog();
+			$this->proclog($exception->getMessage());
+			$this->proclog();
+			$this->proclog($exception->getTraceAsString());
+		}
 	}
 
 	public function proclog($text = '')
