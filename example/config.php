@@ -47,7 +47,7 @@ return
 			'name'       => 'gitea::blackforestbytes',
 			'type'       => 'gitea',
 			'url'        => 'https://gogs.mikescher.com',
-			'filter'     => 'Blackforestbytes/*',
+			'filter'     => 'BlackForestBytes/*',
 			'exclusions' => [],
 			'username'   => 'Mikescher',
 			'password'   => file_get_contents(__DIR__ . '/gitea_password.secret'),

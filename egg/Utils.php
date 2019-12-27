@@ -28,6 +28,17 @@ class Utils
 	}
 
 	/**
+	 * @param string $haystack
+	 * @param string $needle
+	 * @return bool
+	 */
+	public static function endsWith(string $haystack, string $needle)
+	{
+		$length = strlen($needle);
+		return ($length === 0) || (substr($haystack, -$length) === $needle);
+	}
+
+	/**
 	 * @param string $filter
 	 * @param string[] $exclusions
 	 * @param string $name
@@ -58,19 +69,45 @@ class Utils
 	 * @param string $authtoken
 	 * @return array|mixed
 	 */
-	public static function getJSON($logger, $url, $authtoken) {
+	public static function getJSONWithTokenAuth($logger, $url, $authtoken)
+	{
+		return Utils::getJSON($logger, $url, 'Authorization: token ' . $authtoken);
+	}
+
+	/**
+	 * @param ILogger $logger
+	 * @param string $url
+	 * @param string $usr
+	 * @param string $pass
+	 * @return array|mixed
+	 */
+	public static function getJSONWithTokenBasicAuth($logger, $url, $usr, $pass)
+	{
+		return Utils::getJSON($logger, $url, 'Authorization: Basic ' . base64_encode($usr.':'.$pass));
+	}
+
+	/**
+	 * @param ILogger $logger
+	 * @param string $url
+	 * @param string $header
+	 * @return array|mixed
+	 */
+	private static function getJSON($logger, $url, $header)
+	{
+		//$logger->proclog("[@] " . $url);
+
 		if (array_key_exists('HTTP_USER_AGENT', $_SERVER)) {
 			$options  =
 				[
 					'http'  =>
 						[
 							'user_agent' => $_SERVER['HTTP_USER_AGENT'],
-							'header' => 'Authorization: token ' . $authtoken,
+							'header' => $header,
 						],
 					'https' =>
 						[
 							'user_agent' => $_SERVER['HTTP_USER_AGENT'],
-							'header' => 'Authorization: token ' . $authtoken,
+							'header' => $header,
 						],
 				];
 		} else {
@@ -79,19 +116,19 @@ class Utils
 					'http' =>
 						[
 							'user_agent' => 'ExtendedGitGraph_for_mikescher.com',
-							'header' => 'Authorization: token ' . $authtoken,
+							'header' => $header,
 							'ignore_errors' => true,
 						],
 					'https' =>
 						[
 							'user_agent' => 'ExtendedGitGraph_for_mikescher.com',
-							'header' => 'Authorization: token ' . $authtoken,
+							'header' => $header,
 							'ignore_errors' => true,
 						],
 				];
 		}
 
-			$context  = stream_context_create($options);
+		$context  = stream_context_create($options);
 
 		$response = @file_get_contents($url, false, $context);
 
@@ -122,5 +159,21 @@ class Utils
 	{
 		foreach ($dbdata as $_ => $val) $n0 = max($n0, $val);
 		return $n0;
+	}
+
+	public static function urlCombine(string... $elements)
+	{
+		$r = $elements[0];
+		$skip = true;
+		foreach ($elements as $e)
+		{
+			if ($skip) { $skip=false; continue; }
+
+			if (Utils::endsWith($r, '/')) $r = substr($r, 0, strlen($r)-1);
+			if (Utils::startsWith($e, '/')) $e = substr($e, 1);
+
+			$r = $r . '/' . $e;
+		}
+		return $r;
 	}
 }

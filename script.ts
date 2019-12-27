@@ -1,26 +1,5 @@
 namespace ExtendedGitGraph2
 {
-    function formatDate(date: Date)
-    {
-        /*
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const days       = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-        let wday = days[date.getDay()];
-        let day = date.getDate();
-        let monthIndex = date.getMonth();
-        let year = date.getFullYear();
-
-        let suffix = 'th';
-        if (day === 1) suffix = 'st';
-        if (day === 2) suffix = 'nd';
-        if (day === 3) suffix = 'rd';
-
-        return wday + ' ' + day + suffix + ' ' + monthNames[monthIndex] + ', ' + year;
-        */
-        return date.getFullYear() + "-" + date.getMonth().toString().padStart(2, '0') + "-" + date.getDay().toString().padStart(2, '0');
-    }
-
     export function initHover()
     {
         const allsvgtips = Array.from(document.getElementsByClassName("svg-tip"));
@@ -42,14 +21,13 @@ namespace ExtendedGitGraph2
             {
                 const target = event.target as HTMLElement;
 
-                let datesplit = target.getAttribute('data-date')!.split('-');
                 let count = target.getAttribute('data-count');
-                let date  = new Date(Number(datesplit[0]), Number(datesplit[1])-1, Number(datesplit[2]));
+                let date  = target.getAttribute('data-date');
 
                 masterTip.style.display = 'block';
 
                 masterTipHeader.innerHTML = count + ' commits';
-                masterTipContent.innerHTML = ' on ' + formatDate(date);
+                masterTipContent.innerHTML = ' on ' + date;
 
                 masterTip.style.left = (window.pageXOffset + target.getBoundingClientRect().left - masterTip.getBoundingClientRect().width /2 - 3.5 + 9) + 'px';
                 masterTip.style.top  = (window.pageYOffset + target.getBoundingClientRect().top  - masterTip.getBoundingClientRect().height -10)         + 'px';
