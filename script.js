@@ -2,20 +2,23 @@
 var ExtendedGitGraph2;
 (function (ExtendedGitGraph2) {
     function formatDate(date) {
+        /*
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const days       = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
         let wday = days[date.getDay()];
         let day = date.getDate();
         let monthIndex = date.getMonth();
         let year = date.getFullYear();
+
         let suffix = 'th';
-        if (day === 1)
-            suffix = 'st';
-        if (day === 2)
-            suffix = 'nd';
-        if (day === 3)
-            suffix = 'rd';
+        if (day === 1) suffix = 'st';
+        if (day === 2) suffix = 'nd';
+        if (day === 3) suffix = 'rd';
+
         return wday + ' ' + day + suffix + ' ' + monthNames[monthIndex] + ', ' + year;
+        */
+        return date.getFullYear() + "-" + date.getMonth().toString().padStart(2, '0') + "-" + date.getDay().toString().padStart(2, '0');
     }
     function initHover() {
         const allsvgtips = Array.from(document.getElementsByClassName("svg-tip"));

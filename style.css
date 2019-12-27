@@ -27,7 +27,7 @@
     height: 5px;
     width: 5px;
     bottom: -10px;
-    margin: 0px 0px 0px -5px;
+    margin: 0 0 0 -5px;
     content: " ";
     border: 5px solid transparent;
     border-top-color: rgba(0, 0, 0, 0.8);
@@ -40,7 +40,7 @@
 
 .svg-tip {
     padding: 5px;
-    background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0.8);
     color: #BBB;
     font-size: 12px;
     position: absolute;
@@ -58,7 +58,7 @@
 
     border: 1px solid #E3E3E3;
     border-radius: 4px;
-    box-shadow: 0px 0 1px rgba(0, 0, 0, 0.25) inset;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.25) inset;
 }
 
 .egg_footer {
@@ -69,7 +69,7 @@
     margin-bottom: 5px;
 
     color: #FFF;
-    text-shadow: 0px 0px 8px #2C3E50, 0px 0px 8px #2C3E50;
+    text-shadow: 0 0 8px #2C3E50, 0 0 8px #2C3E50;
 }
 
 .egg_footer > a {
@@ -81,5 +81,12 @@
 .egg_footer > a:hover {
     text-decoration: none;
     color: #2C3E50;
-    text-shadow: 0px 0px 8px #00F;
+    text-shadow: 0 0 8px #00F;
 }
+
+/* ==== STANDARD ==== */
+.egg_col_x5_0 { fill: #ebedf0; }
+.egg_col_x5_1 { fill: #c6e48b; }
+.egg_col_x5_2 { fill: #7bc96f; }
+.egg_col_x5_3 { fill: #239a3b; }
+.egg_col_x5_4 { fill: #196127; }

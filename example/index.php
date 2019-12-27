@@ -22,7 +22,7 @@
 
 <a href="javascript:startAjaxGetFromCache()">[SHOW]</a>
 
-<div id="output">&nbsp;</div>
+<div id="htmlOutput"><?php require 'ajaxGetFromCache.php'; ?></div>
 
 <script type="text/javascript">
 	setInterval(refreshStatus, 500);
@@ -90,7 +90,7 @@
 			url:    'ajaxGetFromCache.php',
 			success: function(result)
 			{
-				$('#ajaxOutput').innerHTML(result);
+				$('#htmlOutput').html(result);
 			},
 			error: function( jqXHR, textStatus, errorThrown) { alert(textStatus+"\r\n"+errorThrown); } ,
 			async:   true

@@ -6,4 +6,6 @@ $cfg = require 'config.php';
 
 $egg = new ExtendedGitGraph2($cfg);
 
-print($egg->loadFromCache());
+$data = $egg->loadFromCache();
+
+print($data);

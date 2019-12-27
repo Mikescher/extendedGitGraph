@@ -2,6 +2,7 @@ namespace ExtendedGitGraph2
 {
     function formatDate(date: Date)
     {
+        /*
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const days       = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -16,6 +17,8 @@ namespace ExtendedGitGraph2
         if (day === 3) suffix = 'rd';
 
         return wday + ' ' + day + suffix + ' ' + monthNames[monthIndex] + ', ' + year;
+        */
+        return date.getFullYear() + "-" + date.getMonth().toString().padStart(2, '0') + "-" + date.getDay().toString().padStart(2, '0');
     }
 
     export function initHover()

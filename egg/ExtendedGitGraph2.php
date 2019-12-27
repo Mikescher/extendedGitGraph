@@ -115,19 +115,16 @@ class ExtendedGitGraph2 implements ILogger
 		}
 	}
 
-	public function loadFromCache(): string
+	/**
+	 * @return string|null
+	 */
+	public function loadFromCache()
 	{
 		try
 		{
 			$this->db->open();
 
-			$this->proclog("Start load from cache");
-			$this->proclog();
-
 			$data = $this->outputter->loadFromCache();
-
-			$this->db->close();
-			$this->proclog("LoadFromCache finished.");
 
 			return $data;
 		}

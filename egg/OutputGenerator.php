@@ -7,9 +7,9 @@ interface IOutputGenerator
 {
 	/**
 	 * @param $db EGGDatabase
-	 * @return string
+	 * @return string|null
 	 */
-	public function updateCache(EGGDatabase $db): string;
+	public function updateCache(EGGDatabase $db);
 
 	/**
 	 * @return string|null
@@ -41,24 +41,27 @@ class FullRenderer implements IOutputGenerator
 	}
 
 	/**
-	 * @param $db EGGDatabase
-	 * @return string
+	 * @inheritDoc
 	 */
-	public function updateCache(EGGDatabase $db): string
+	public function updateCache(EGGDatabase $db)
 	{
 		$years = $db->getAllYears();
+		$dyears = [];
 
 		$result = "";
 		foreach ($years as $year)
 		{
 			$gen = new SingleYearRenderer($this->logger, $year, $this->identities, $this->cache_files_path);
 			$cc = $gen->updateCache($db);
+			if ($cc === null) continue;
 
 			$result .= $cc;
 			$result .= "\n\n\n";
+
+			$dyears []= $year;
 		}
 
-		$data = json_encode($years);
+		$data = json_encode($dyears);
 
 		$path = Utils::sharpFormat($this->cache_files_path, ['ident' => 'fullrenderer']);
 
@@ -92,6 +95,7 @@ class FullRenderer implements IOutputGenerator
 			$result .= $cc;
 			$result .= "\n\n\n";
 		}
+		return $result;
 	}
 }
 
@@ -142,17 +146,22 @@ class SingleYearRenderer implements IOutputGenerator
 			$this->logger->proclog("No cache found for [".('singleyear_'.$this->year)."]");
 			return null;
 		}
-
 		return file_get_contents($path);
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function updateCache(EGGDatabase $db): string
+	public function updateCache(EGGDatabase $db)
 	{
 		$this->logger->proclog("Generate cache file for year ".$this->year);
 		$data = $this->generate($db);
+
+		if ($data === null) {
+			$this->logger->proclog("No data for year ".$this->year);
+			$this->logger->proclog("");
+			return null;
+		}
 
 		$path = Utils::sharpFormat($this->cache_files_path, ['ident' => 'singleyear_'.$this->year]);
 
@@ -164,11 +173,15 @@ class SingleYearRenderer implements IOutputGenerator
 	}
 
 	/**
-	 * @inheritDoc
+	 * @param EGGDatabase $db
+	 * @return string|null
+	 * @throws Exception
 	 */
-	private function generate(EGGDatabase $db): string
+	private function generate(EGGDatabase $db)
 	{
 		$dbdata = $db->getCommitCountOfYearByDate($this->year, $this->identities);
+
+		if (Utils::array_value_max(0, $dbdata) === 0) return null;
 
 		$now = new DateTime();
 		$date = new DateTime($this->year . '-01-01');
