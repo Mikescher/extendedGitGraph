@@ -49,6 +49,22 @@ For a more interactive `update()` experience (it can take a few minutes dependin
 Then you can repeatedly query the session to get the current stdout.  
 For a (quick and dirty) written example see `example/index.php`.
 
+#### CSS, javascript and themes
+
+You need to include the supplied script.js and style.css (script.js only if you want to have the tooltip).  
+Also you can change the theme by editing the style.css and uncommenting the theme definitions.
+
+There are a few predefined themes included:
+ - custom
+ - standard
+ - modern
+ - gray
+ - red
+ - blue
+ - purple
+ - orange
+ - halloween
+
 #### Contribute
 
 yes, please.
