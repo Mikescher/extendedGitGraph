@@ -42,6 +42,26 @@ class FileLogger implements ILogger
 	}
 }
 
+class SingleFileLogger implements ILogger
+{
+	/** @var string $path */
+	private $path;
+
+	/**
+	 * @var string $filename
+	 */
+	public function __construct($filename)
+	{
+		$this->path = $filename;
+		file_put_contents($this->path, '', FILE_TEXT);
+	}
+
+	public function proclog($text)
+	{
+		file_put_contents($this->path, $text . PHP_EOL , FILE_APPEND | LOCK_EX);
+	}
+}
+
 class SessionLogger implements ILogger
 {
 	/** @var string $sessionvar */

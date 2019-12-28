@@ -2,14 +2,41 @@
 
 $cfg = require (__DIR__.'/config.php');
 
-if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-
-if (isset($_GET['clear']))
+if ($cfg['output_file'])
 {
-	if (key_exists($cfg['session_var'], $_SESSION)) $_SESSION[$cfg['session_var']] = '';
-}
+	$lfile = $cfg['output_filepath'];
 
-if (key_exists($cfg['session_var'], $_SESSION))
-	echo $_SESSION[$cfg['session_var']];
+	if (file_exists($lfile))
+	{
+		$data = file_get_contents($lfile);
+
+		if ($data === '') echo '[[ EMPTY ]]';
+		else echo $data;
+	}
+	else
+	{
+		echo '[[ FILE NOT FOUND ]]';
+	}
+}
+else if ($cfg['output_file'])
+{
+	if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+
+	$svar = $cfg['session_var'];
+
+	if (isset($_GET['clear'])) if (key_exists($svar, $_SESSION)) $_SESSION[$svar] = '';
+
+	if (key_exists($svar, $_SESSION))
+	{
+		if ($_SESSION[$svar] === '') echo '[[ NO OUTPUT ]]';
+		else echo $_SESSION[$svar];
+	}
+	else
+	{
+		echo '[[ NO SESSION STARTED ]]';
+	}
+}
 else
-	echo '[[ NO SESSION STARTED ]]';
+{
+	echo '[[ NO USEFUL LOGGER CONFIGURED ]]';
+}

@@ -9,6 +9,9 @@ return
 	'output_session'     => true,
 	'session_var'        => 'ajax_progress_egg_refresh',
 
+	'output_file'        => true,
+	'output_filepath'    => __DIR__ . "/../dynamic/egg/process.txt",
+
 	'output_stdout'      => true,
 
 	'data_cache_file'    => __DIR__ . "/../output/cache.sqlite3",
