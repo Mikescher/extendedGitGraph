@@ -18,7 +18,7 @@ if ($cfg['output_file'])
 		echo '[[ FILE NOT FOUND ]]';
 	}
 }
-else if ($cfg['output_file'])
+else if ($cfg['output_session'])
 {
 	if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
