@@ -6,4 +6,6 @@ $cfg = require 'config.php';
 
 $egg = new ExtendedGitGraph2($cfg);
 
-$egg->update();
+$r = $egg->update();
+
+if ($r) http_response_code(200); else http_response_code(500);
