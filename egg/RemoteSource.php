@@ -483,7 +483,7 @@ class GiteaConnection extends StandardGitConnection
 {
 	const API_BASE_URL     = '/api/v1';
 
-	const API_USER_REPO_LIST = '/users/{user}/repos';
+	const API_USER_REPO_LIST = '/users/{user}/repos?page={page}&limit={limit}';
 	const API_BRANCH_LIST    = '/repos/{repo}/branches';
 	const API_COMMIT_LIST    = '/repos/{repo}/commits?sha={sha}';
 
@@ -529,15 +529,14 @@ class GiteaConnection extends StandardGitConnection
 	/** @inheritDoc */
 	protected function queryRepositories($user, $page)
 	{
-		if ($page > 1) return [];
-		$url = Utils::sharpFormat(Utils::urlCombine($this->url, self::API_BASE_URL, self::API_USER_REPO_LIST), ['user'=>$user ]);
+		$url = Utils::sharpFormat(Utils::urlCombine($this->url, self::API_BASE_URL, self::API_USER_REPO_LIST), ['user'=>$user, 'page'=>$page, 'limit'=>64 ]);
 		return Utils::getJSONWithTokenBasicAuth($this->logger, $url, $this->username, $this->password);
 	}
 
 	/** @inheritDoc */
 	protected function queryBranches($reponame)
 	{
-		$url = Utils::sharpFormat(Utils::urlCombine($this->url, self::API_BASE_URL, self::API_BRANCH_LIST), ['repo'=>$reponame]);
+		$url = Utils::sharpFormat(Utils::urlCombine($this->url, self::API_BASE_URL, self::API_BRANCH_LIST), ['repo'=>$reponame, 'limit'=>256]);
 		return Utils::getJSONWithTokenBasicAuth($this->logger, $url, $this->username, $this->password);
 	}
 
