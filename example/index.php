@@ -25,7 +25,7 @@
 <div id="htmlOutput"><?php require 'ajaxGetFromCache.php'; ?></div>
 
 <script type="text/javascript">
-	setInterval(refreshStatus, 500);
+	setInterval(refreshStatus, 2000);
 
 	jQuery.ajax({url: 'ajaxStatus.php?clear=1', async: true });
 

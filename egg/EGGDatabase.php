@@ -62,7 +62,7 @@ class EGGDatabase
 
 	public function abortTransactionIfExists()
 	{
-		if ($this->pdo !== null) $this->pdo->rollBack();
+		if ($this->pdo !== null && $this->pdo->inTransaction()) $this->pdo->rollBack();
 	}
 
 	private function init()
@@ -104,9 +104,22 @@ class EGGDatabase
 		}
 
 		$stmt->execute();
-		$r = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-		return $r;
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public function sql_query_assoc_pre_prep(PDOStatement $stmt, array $params)
+	{
+		$stmt->closeCursor();
+
+		foreach ($params as $p)
+		{
+			if (strpos($stmt->queryString, $p[0]) !== FALSE) $stmt->bindValue($p[0], $p[1], $p[2]);
+		}
+
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 
 	public function sql_exec_prep(string $query, array $params)
@@ -116,6 +129,20 @@ class EGGDatabase
 		foreach ($params as $p)
 		{
 			if (strpos($query, $p[0]) !== FALSE) $stmt->bindValue($p[0], $p[1], $p[2]);
+		}
+
+		$stmt->execute();
+
+		return $stmt->rowCount();
+	}
+
+	public function sql_exec_pre_prep(PDOStatement $stmt, array $params)
+	{
+		$stmt->closeCursor();
+
+		foreach ($params as $p)
+		{
+			if (str_contains($stmt->queryString, $p[0])) $stmt->bindValue($p[0], $p[1], $p[2]);
 		}
 
 		$stmt->execute();
@@ -222,19 +249,25 @@ class EGGDatabase
 	 * @param Commit[] $commits
 	 */
 	public function insertNewCommits(string $source, Repository $repo, Branch $branch, array $commits) {
-		$this->logger->proclog("Inserted " . count($commits) . " (new) commits into [" . $source . "|" . $repo->Name  . "|" . $branch->Name . "]");
+		$this->logger->proclog("Inserting " . count($commits) . " (new) commits into [" . $source . "|" . $repo->Name  . "|" . $branch->Name . "]");
+
+
+		$stmtAddCommit = $this->pdo->prepare("INSERT INTO commits ([branch_id], [hash]) VALUES (:brid, :sha)");
+		$stmtAddMD = $this->pdo->prepare("INSERT OR IGNORE INTO metadata ([hash], [author_name], [author_email], [committer_name], [committer_email], [message], [date], [parent_commits]) VALUES (:sha, :an, :am, :cn, :cm, :msg, :dat, :prt)");
+		$stmtGetID = $this->pdo->prepare("SELECT id FROM commits WHERE [branch_id] = :brid AND [Hash] = :sha");
 
 		foreach ($commits as $commit)
 		{
-			$strparents = implode(";", $commit->Parents);
+			$jparents = "[]";
+			if (count($commit->Parents) > 0) $jparents = '["'.implode('","', $commit->Parents).'"]';
 
-			$this->sql_exec_prep("INSERT INTO commits ([branch_id], [hash]) VALUES (:brid, :sha)",
+			$this->sql_exec_pre_prep($stmtAddCommit,
 				[
 					[":brid", $branch->ID,             PDO::PARAM_INT],
 					[":sha",  $commit->Hash,           PDO::PARAM_STR],
 				]);
 
-			$this->sql_exec_prep("INSERT OR IGNORE INTO metadata ([hash], [author_name], [author_email], [committer_name], [committer_email], [message], [date], [parent_commits]) VALUES (:sha, :an, :am, :cn, :cm, :msg, :dat, :prt)",
+			$this->sql_exec_pre_prep($stmtAddMD,
 				[
 					[":sha",  $commit->Hash,           PDO::PARAM_STR],
 					[":an",   $commit->AuthorName,     PDO::PARAM_STR],
@@ -243,10 +276,10 @@ class EGGDatabase
 					[":cm",   $commit->CommitterEmail, PDO::PARAM_STR],
 					[":msg",  $commit->Message,        PDO::PARAM_STR],
 					[":dat",  $commit->Date,           PDO::PARAM_STR],
-					[":prt",  $strparents,             PDO::PARAM_STR],
+					[":prt",  $jparents,               PDO::PARAM_STR],
 				]);
 
-			$dbid = $this->sql_query_assoc_prep("SELECT id FROM commits WHERE [branch_id] = :brid AND [Hash] = :sha",
+			$dbid = $this->sql_query_assoc_pre_prep($stmtGetID,
 				[
 					[":brid", $branch->ID,             PDO::PARAM_INT],
 					[":sha",  $commit->Hash,           PDO::PARAM_STR],
@@ -261,6 +294,8 @@ class EGGDatabase
 	 * @param string $head
 	 */
 	public function setBranchHead(Branch $branch, string $head) {
+		$this->logger->proclog("Set HEAD of branch [" . $branch->Repo->Source . "|" . $branch->Repo->Name  . "|" . $branch->Name . "] to {".substr($head, 0, 8)."}");
+
 		$this->sql_exec_prep("UPDATE branches SET head = :head WHERE id = :id",
 			[
 				[":id",   $branch->ID, PDO::PARAM_INT],
@@ -351,13 +386,21 @@ class EGGDatabase
 		}
 	}
 
-	public function deleteDanglingCommitdata(string $name)
+	public function deleteDanglingCommitdata()
 	{
-		$db = $this->sql_query_assoc_prep("SELECT metadata.hash FROM metadata LEFT JOIN commits WHERE commits.hash IS NULL", []);
+		$hashes = $this->sql_query_assoc_prep("SELECT metadata.hash AS mdh FROM metadata LEFT JOIN commits ON metadata.hash = commits.hash WHERE commits.hash IS NULL", []);
 
-		if (count($db) === 0) return;
+		if (count($hashes) === 0) return;
 
-		$this->logger->proclog("Delete ".count($db)." dangling commits [" . $name . "] from database (no longer linked)");
+		$this->logger->proclog("Deleting ".count($hashes)." dangling commit[metadata] from database (no longer linked)");
+
+		$this->beginTransaction();
+		foreach ($hashes as $hash) {
+			$this->sql_query_assoc_prep("DELETE FROM metadata WHERE hash = :hash", [ [":hash", $hash['mdh'], PDO::PARAM_STR] ]);
+		}
+		$this->commitTransaction();
+
+		$this->logger->proclog("Succesfully deleted ".count($hashes)." dangling commit[metadata]");
 	}
 
 	/**
@@ -465,9 +508,13 @@ class EGGDatabase
 	/**
 	 * @return Commit[]
 	 */
-	public function getCommits(Branch $branch): array
+	public function getCommitsForBranch(Branch $branch): array
 	{
-		$rows = $this->sql_query_assoc("SELECT metadata.*, commits.id AS commitid FROM commits LEFT JOIN metadata WHERE commits.branch_id = :bid", [[":bid", $branch->ID, PDO::PARAM_INT]]);
+		$rows = $this->sql_query_assoc_prep("SELECT metadata.*, commits.id AS commitid FROM commits LEFT JOIN metadata ON metadata.hash = commits.hash WHERE commits.branch_id = :bid",
+			[
+				[":bid", $branch->ID, PDO::PARAM_INT]
+			]);
+
 		$r = [];
 		foreach ($rows as $row)
 		{
@@ -481,9 +528,120 @@ class EGGDatabase
 			$c->CommitterEmail = $row['committer_email'];
 			$c->Message        = $row['message'];
 			$c->Date           = $row['date'];
-			$c->Parents        = $row['parent_commits'];
+			$c->Parents        = json_decode($row['parent_commits']);
 			$r []= $c;
 		}
 		return $r;
+	}
+
+	/**
+	 * @return Commit[]
+	 */
+	public function getCommitdataForRepo(Repository $repo, Branch $branchValue): array
+	{
+		$rows = $this->sql_query_assoc_prep("SELECT DISTINCT metadata.* FROM branches INNER JOIN commits ON branches.id = commits.branch_id LEFT JOIN metadata ON metadata.hash = commits.hash WHERE branches.repo_id = :rid",
+			[
+				[":rid", $repo->ID, PDO::PARAM_INT]
+			]);
+
+		$r = [];
+		foreach ($rows as $row)
+		{
+			$c = new Commit();
+			$c->Branch         = $branchValue;
+			$c->Hash           = $row['hash'];
+			$c->AuthorName     = $row['author_name'];
+			$c->AuthorEmail    = $row['author_email'];
+			$c->CommitterName  = $row['committer_name'];
+			$c->CommitterEmail = $row['committer_email'];
+			$c->Message        = $row['message'];
+			$c->Date           = $row['date'];
+			$c->Parents        = json_decode($row['parent_commits']);
+			$r []= $c;
+		}
+		return $r;
+	}
+
+	public function checkDatabase(): array{
+
+		$result = [];
+
+		// ======== [1] invalid json in parent_commits ==========
+		{
+			$errors = $this->sql_query_assoc_prep("SELECT * FROM metadata WHERE NOT json_valid(parent_commits)", []);
+
+			foreach ($errors as $e) {
+				$result []= "Found commit-metadata entry {".$e['hash']."} with invalid json in 'parent_commits'";
+			}
+		}
+
+		// ======== [2] metadata with missing parent ==========
+		{
+			$errors = $this->sql_query_assoc_prep("
+SELECT md1.*, md2.hash as check_hash FROM (
+	
+	SELECT 
+		md1.*, mdp.value AS parent 
+	FROM 
+		metadata AS md1, json_each(md1.parent_commits) AS mdp 
+
+) AS md1
+	
+LEFT JOIN metadata AS md2 ON md1.parent = md2.hash
+
+WHERE md1.parent != '' AND check_hash IS NULL", []);
+
+			foreach ($errors as $e) {
+				$result []= "Found commit-metadata entry {".$e['hash']."} with an reference to a not-existing parent '".$e['parent']."'";
+			}
+		}
+
+#		// ======== [3] repositories without branches ==========
+#		{
+#			$errors = $this->sql_query_assoc_prep("SELECT repositories.*, (SELECT COUNT(*) FROM branches WHERE repositories.id = branches.repo_id) AS branch_count FROM repositories WHERE branch_count = 0", []);
+#
+#			foreach ($errors as $e) {
+#				$result []= "Found repository [".$e['id']."]'".$e['name']."' without any branches";
+#			}
+#		}
+
+
+		// ======== [4] branches without commits ==========
+		{
+			$errors = $this->sql_query_assoc_prep("SELECT branches.*, (SELECT COUNT(*) FROM commits WHERE branches.id = commits.branch_id) AS commit_count FROM branches WHERE commit_count = 0", []);
+
+			foreach ($errors as $e) {
+				$result []= "Found branch [".$e['id']."]'".$e['name']."' without any commits";
+			}
+		}
+
+		// ======== [5] commits with missing metadata ==========
+		{
+			$errors = $this->sql_query_assoc_prep("SELECT commits.*, metadata.hash AS mdh FROM commits LEFT JOIN metadata ON commits.hash = metadata.hash WHERE mdh IS NULL", []);
+
+			foreach ($errors as $e) {
+				$result []= "Missing metadata for commit ".$e['id']." | {".$e['hash']."}";
+			}
+		}
+
+		// ======== [6] metadata with missing commits ==========
+		{
+			$errors = $this->sql_query_assoc_prep("SELECT metadata.*, commits.hash AS ch FROM metadata LEFT JOIN commits ON commits.hash = metadata.hash WHERE ch IS NULL", []);
+
+			foreach ($errors as $e) {
+				$result []= "Missing commit for metadata entry {".$e['hash']."}";
+			}
+		}
+
+		// ======== [7] missing branch-head in commits ==========
+		{
+			$errors = $this->sql_query_assoc_prep("SELECT branches.*, commits.id AS cid FROM branches LEFT JOIN commits ON branches.head = commits.hash WHERE cid IS NULL", []);
+
+			foreach ($errors as $e) {
+				$result []= "Missing head-commit {".$e['head']."} for branch ".$e['id'].": '".$e['name']."'";
+			}
+		}
+
+		return $result;
 	}
 }

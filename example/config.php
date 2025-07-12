@@ -38,19 +38,10 @@ return
 			'token_cache'  => __DIR__ . '/../output/gh_token_cache.secret'
 		],
 		[
-			'name'       => 'gitea::personal',
+			'name'       => 'gitea::bfb',
 			'type'       => 'gitea',
 			'url'        => 'https://gogs.mikescher.com',
-			'filter'     => 'Mikescher/*',
-			'exclusions' => [],
-			'username'   => 'Mikescher',
-			'password'   => file_get_contents(__DIR__ . '/gitea_password.secret'),
-		],
-		[
-			'name'       => 'gitea::blackforestbytes',
-			'type'       => 'gitea',
-			'url'        => 'https://gogs.mikescher.com',
-			'filter'     => 'BlackForestBytes/*',
+			'filter'     => '*/*',
 			'exclusions' => [],
 			'username'   => 'Mikescher',
 			'password'   => file_get_contents(__DIR__ . '/gitea_password.secret'),

@@ -3,6 +3,8 @@
 require_once 'Logger.php';
 require_once 'EGGException.php';
 require_once 'RemoteSource.php';
+require_once 'RemoteSourceGithub.php';
+require_once 'RemoteSourceGitea.php';
 require_once 'OutputGenerator.php';
 require_once 'EGGDatabase.php';
 require_once 'Utils.php';
@@ -62,7 +64,6 @@ class ExtendedGitGraph2 implements ILogger
 		try
 		{
 			$this->db->open();
-			$this->db->beginTransaction();
 
 			$this->proclog("Start incremental data update");
 			$this->proclog();
@@ -76,11 +77,12 @@ class ExtendedGitGraph2 implements ILogger
 				$this->proclog();
 			}
 
+			$this->db->beginTransaction();
 			$this->db->deleteOldSources(array_map(function (IRemoteSource $v){ return $v->getName(); }, $this->sources));
+			$this->db->commitTransaction();
 
 			$this->proclog("Update finished.");
 
-			$this->db->commitTransaction();
 			$this->proclog("Data written.");
 
 			$this->db->close();
@@ -176,5 +178,19 @@ class ExtendedGitGraph2 implements ILogger
 	public function proclog($text = '')
 	{
 		foreach($this->logger as $lgr) $lgr->proclog($text);
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function checkDatabase(): array
+	{
+		$this->db->open();
+
+		$r = $this->db->checkDatabase();
+
+		$this->db->close();
+
+		return $r;
 	}
 }

@@ -53,7 +53,7 @@ class SingleFileLogger implements ILogger
 	public function __construct($filename)
 	{
 		$this->path = $filename;
-		file_put_contents($this->path, '', FILE_TEXT);
+		file_put_contents($this->path, '');
 	}
 
 	public function proclog($text)
@@ -84,7 +84,7 @@ class SessionLogger implements ILogger
 	{
 		if (session_status() === PHP_SESSION_DISABLED) return;
 
-		$_SESSION[$this->sessionvar] .= $text . "\r\n";
+		$_SESSION[$this->sessionvar] .= $text . "\n";
 		session_commit();
 	}
 }
@@ -96,7 +96,7 @@ class OutputLogger implements ILogger
 		if ($text !== '') $text = '[' . date('H:i:s') . '] ' . $text;
 
 		print $text;
-		print "\r\n";
+		print "\n";
 	}
 
 }
